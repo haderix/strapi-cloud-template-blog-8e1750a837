@@ -32,6 +32,10 @@ $RECYCLE.BIN/
 *.msp
 
 
+# VS Code workspace files
+*.code-workspace
+
+
 ############################
 # Packages
 ############################

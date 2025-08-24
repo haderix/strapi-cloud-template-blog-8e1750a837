@@ -1,46 +1,50 @@
-'use strict';
+"use strict";
 
 const axios = require("axios");
-const csv = require("csvtojson");
 
-module.exports = ({ strapi }) => ({
-  async fetchUnits() {
-    const url = process.env.APPFOLIO_REPORT_URL; // full URL to Unit Directory report .csv
-    const username = process.env.APPFOLIO_USER;
-    const password = process.env.APPFOLIO_PASS;
-
-    const response = await axios.get(url, {
-      auth: { username, password },
-      responseType: "text",
-    });
-
-    const units = await csv().fromString(response.data);
-    return units;
-  },
-
-  async syncUnits() {
-    const units = await this.fetchUnits();
-
-    for (const unit of units) {
-      await strapi.db.query("api::rental-unit.rental-unit").upsert({
-        where: { unit_id: unit["Unit ID"] }, // assumes "Unit ID" is a column in AppFolio report
-        update: {
-          name: unit["Unit Name"],
-          address: unit["Property Address"],
-          rent: unit["Market Rent"],
-          status: unit["Status"],
-        },
-        create: {
-          unit_id: unit["Unit ID"],
-          name: unit["Unit Name"],
-          address: unit["Property Address"],
-          rent: unit["Market Rent"],
-          status: unit["Status"],
-        },
-      });
+module.exports = {
+  async syncUnits(strapi) {
+    const appfolioUrl = process.env.APPFOLIO_UNIT_DIRECTORY_URL;
+    const username = process.env.APPFOLIO_USERNAME;
+    const password = process.env.APPFOLIO_PASSWORD;
+    if (!appfolioUrl || !username || !password) {
+      throw new Error("Missing AppFolio API credentials or URL");
     }
-
-    strapi.log.info(`[AppFolio] Synced ${units.length} units`);
-    return units.length;
+    // Fetch unit_directory.json
+    const response = await axios.get(appfolioUrl, {
+      auth: { username, password },
+      responseType: "json",
+    });
+    const units = response.data.units || response.data; // adjust if structure differs
+    // Map and upsert units into Strapi
+    for (const unit of units) {
+      // Example mapping: adjust to your content type fields
+      const unitData = {
+        name: unit.name || unit.unit_name,
+        address: unit.address,
+        bedrooms: unit.bedrooms,
+        bathrooms: unit.bathrooms,
+        rent: unit.rent,
+        available: unit.available,
+        appfolio_id: unit.id || unit.unit_id,
+        // Add more fields as needed
+      };
+      // Upsert logic: find by appfolio_id, update or create
+      const existing = await strapi.db.query("api::rental-unit.rental-unit").findOne({
+        where: { appfolio_id: unitData.appfolio_id },
+      });
+      if (existing) {
+        await strapi.db.query("api::rental-unit.rental-unit").update({
+          where: { id: existing.id },
+          data: unitData,
+        });
+      } else {
+        await strapi.db.query("api::rental-unit.rental-unit").create({
+          data: unitData,
+        });
+      }
+    }
+    return { count: units.length };
   },
-});
+};
+// ...existing code...
