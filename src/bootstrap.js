@@ -275,6 +275,8 @@ async function main() {
 }
 
 module.exports = async ({ strapi }) => {
+  // Temporarily comment out cron job setup to test AppFolio plugin functionality
+  /*
   // Set up cron job for AppFolio sync if the plugin is enabled
   const appfolioPlugin = strapi.plugin('appfolio-sync');
 
@@ -301,6 +303,9 @@ module.exports = async ({ strapi }) => {
   } else {
     strapi.log.warn('AppFolio plugin not found or cron not available');
   }
+  */
+  
+  strapi.log.info('AppFolio plugin loaded - cron jobs temporarily disabled for testing');
 
   await seedExampleApp();
 };

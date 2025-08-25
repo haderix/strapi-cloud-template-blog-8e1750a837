@@ -4,6 +4,6 @@ module.exports = () => ({
     resolve: './src/plugins/appfolio-sync'
   },
   cron: {
-    enabled: true,
+    enabled: false, // Temporarily disable cron plugin
   },
 });
