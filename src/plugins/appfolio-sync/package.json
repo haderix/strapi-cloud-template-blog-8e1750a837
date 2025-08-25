@@ -1,0 +1,21 @@
+{
+  "name": "appfolio-sync",
+  "version": "1.0.0",
+  "description": "AppFolio synchronization plugin for Strapi",
+  "main": "./strapi-server.js",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "keywords": [
+    "strapi-plugin",
+    "appfolio",
+    "sync",
+    "rental-units"
+  ],
+  "strapi": {
+    "displayName": "AppFolio Sync",
+    "name": "appfolio-sync",
+    "description": "Synchronize rental units from AppFolio",
+    "kind": "plugin"
+  }
+}

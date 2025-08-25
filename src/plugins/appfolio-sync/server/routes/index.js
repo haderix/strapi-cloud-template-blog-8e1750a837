@@ -1,7 +1,5 @@
 'use strict';
 
-const appfolio = require('./appfolio');
-
 module.exports = [
   {
     method: 'GET',
