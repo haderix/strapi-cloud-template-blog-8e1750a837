@@ -2,18 +2,14 @@
 
 module.exports = ({ strapi }) => {
   return {
-    register() {},
+    register() {
+      // Plugin registration logic here if needed
+    },
 
     bootstrap() {
-      // Register cron job for nightly sync
-      strapi.cron.add({
-        "0 2 * * *": async ({ strapi }) => {
-          await strapi
-            .plugin("appfolio-sync")
-            .service("appfolio")
-            .syncUnits();
-        },
-      });
+      // Plugin bootstrap logic here
+      // Note: Cron jobs should be set up in the main app bootstrap, not in plugin bootstrap
+      strapi.log.info('AppFolio Sync plugin loaded successfully');
     },
   };
 };

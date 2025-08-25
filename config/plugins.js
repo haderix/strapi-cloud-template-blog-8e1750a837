@@ -3,4 +3,7 @@ module.exports = () => ({
     enabled: true,
     resolve: './src/plugins/appfolio-sync'
   },
+  cron: {
+    enabled: true,
+  },
 });

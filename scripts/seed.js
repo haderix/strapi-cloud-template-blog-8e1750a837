@@ -3,7 +3,32 @@
 const fs = require('fs-extra');
 const path = require('path');
 const mime = require('mime-types');
-const { categories, authors, articles, global, about } = require('../data/data.json');
+
+// Import data with proper error handling
+let seedData;
+try {
+  const dataPath = path.join(__dirname, '../data/data.json');
+  if (fs.existsSync(dataPath)) {
+    const raw = fs.readFileSync(dataPath, 'utf8');
+    seedData = JSON.parse(raw);
+  } else {
+    throw new Error(`Seed file not found at ${dataPath}`);
+  }
+} catch (error) {
+  console.error('Could not load seed data:', error.message);
+  seedData = {
+    categories: [],
+    authors: [],
+    articles: [],
+    global: {
+      siteName: "Default Site",
+      defaultSeo: { metaTitle: "Default", metaDescription: "Default description" }
+    },
+    about: { title: "About", blocks: [] }
+  };
+}
+
+const { categories, authors, articles, global, about } = seedData;
 
 async function seedExampleApp() {
   const shouldImportSeedData = await isFirstRun();
@@ -61,14 +86,18 @@ async function setPublicPermissions(newPermissions) {
 }
 
 function getFileSizeInBytes(filePath) {
-  const stats = fs.statSync(filePath);
-  const fileSizeInBytes = stats['size'];
-  return fileSizeInBytes;
+  try {
+    const stats = fs.statSync(filePath);
+    return stats.size;
+  } catch (err) {
+    console.error(`File not found: ${filePath}`);
+    return 0;
+  }
 }
 
 function getFileData(fileName) {
-  const filePath = path.join('data', 'uploads', fileName);
-  // Parse the file metadata
+  // Use absolute path for uploads
+  const filePath = path.join(__dirname, '../data/uploads', fileName);
   const size = getFileSizeInBytes(filePath);
   const ext = fileName.split('.').pop();
   const mimeType = mime.lookup(ext || '') || '';
@@ -82,11 +111,20 @@ function getFileData(fileName) {
 }
 
 async function uploadFile(file, name) {
+  // Ensure file exists before uploading
+  if (!fs.existsSync(file.filepath)) {
+    throw new Error(`Upload file not found: ${file.filepath}`);
+  }
   return strapi
     .plugin('upload')
     .service('upload')
     .upload({
-      files: file,
+      files: {
+        path: file.filepath,
+        name: file.originalFileName,
+        type: file.mimetype,
+        size: file.size,
+      },
       data: {
         fileInfo: {
           alternativeText: `An image uploaded to Strapi called ${name}`,
@@ -100,8 +138,7 @@ async function uploadFile(file, name) {
 // Create an entry and attach files if there are any
 async function createEntry({ model, entry }) {
   try {
-    // Actually create the entry in Strapi
-    await strapi.documents(`api::${model}.${model}`).create({
+    await strapi.db.query(`api::${model}.${model}`).create({
       data: entry,
     });
   } catch (error) {
@@ -118,23 +155,24 @@ async function checkFileExistsBeforeUpload(files) {
     // Check if the file already exists in Strapi
     const fileWhereName = await strapi.query('plugin::upload.file').findOne({
       where: {
-        name: fileName.replace(/\..*$/, ''),
+        name: fileName,
       },
     });
 
     if (fileWhereName) {
-      // File exists, don't upload it
       existingFiles.push(fileWhereName);
     } else {
-      // File doesn't exist, upload it
       const fileData = getFileData(fileName);
       const fileNameNoExtension = fileName.split('.').shift();
-      const [file] = await uploadFile(fileData, fileNameNoExtension);
-      uploadedFiles.push(file);
+      try {
+        const [file] = await uploadFile(fileData, fileNameNoExtension);
+        uploadedFiles.push(file);
+      } catch (err) {
+        console.error(`Failed to upload file: ${fileName}`, err);
+      }
     }
   }
   const allFiles = [...existingFiles, ...uploadedFiles];
-  // If only one file then return only that file
   return allFiles.length === 1 ? allFiles[0] : allFiles;
 }
 
@@ -261,6 +299,8 @@ async function main() {
   const app = await createStrapi(appContext).load();
 
   app.log.level = 'error';
+
+  global.strapi = app; // Ensure strapi is available globally
 
   await seedExampleApp();
   await app.destroy();

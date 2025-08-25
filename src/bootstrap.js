@@ -3,7 +3,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const mime = require('mime-types');
-const { categories, authors, articles, global, about } = require('../data/data.json');
+// Load seed data from JSON file using fs
+const seedData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/data.json'), 'utf8'));
+const { categories, authors, articles, global, about } = seedData;
 
 async function seedExampleApp() {
   const shouldImportSeedData = await isFirstRun();
@@ -101,9 +103,13 @@ async function uploadFile(file, name) {
 async function createEntry({ model, entry }) {
   try {
     // Actually create the entry in Strapi
-    await strapi.documents(`api::${model}.${model}`).create({
-      data: entry,
-    });
+    const uid = /** @type {any} */ (`api::${model}.${model}`);
+    await strapi.entityService.create(
+      uid,
+      {
+        data: entry,
+      }
+    );
   } catch (error) {
     console.error({ model, entry, error });
   }
@@ -268,7 +274,33 @@ async function main() {
   process.exit(0);
 }
 
+module.exports = async ({ strapi }) => {
+  // Set up cron job for AppFolio sync if the plugin is enabled
+  const appfolioPlugin = strapi.plugin('appfolio-sync');
 
-module.exports = async () => {
+  if (appfolioPlugin && strapi.cron) {
+    strapi.log.info('Setting up AppFolio sync cron job...');
+
+    // Register cron job for nightly sync at 2 AM
+    strapi.cron.add({
+      '0 2 * * *': async () => {
+        try {
+          strapi.log.info('Running scheduled AppFolio sync...');
+          const result = await strapi
+            .plugin('appfolio-sync')
+            .service('appfolio')
+            .syncUnits();
+          strapi.log.info(`Scheduled sync completed: ${result.count} units synced`);
+        } catch (error) {
+          strapi.log.error('Scheduled AppFolio sync failed:', error);
+        }
+      },
+    });
+
+    strapi.log.info('AppFolio sync cron job registered for daily 2 AM execution');
+  } else {
+    strapi.log.warn('AppFolio plugin not found or cron not available');
+  }
+
   await seedExampleApp();
 };

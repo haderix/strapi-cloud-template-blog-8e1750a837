@@ -1,54 +1,54 @@
 {
-  "global": {
-    "siteName": "Strapi Blog",
-    "defaultSeo": {
-      "metaTitle": "Page",
-      "metaDescription": "A blog made with Strapi",
-      "shareImage": null
-    },
-    "siteDescription": "A Blog made with Strapi",
-    "favicon": null
-  },
-  "about": {
-    "title": "About the strapi blog",
-    "blocks": [
-      {
-        "__component": "shared.quote",
-        "title": "Thelonius Monk",
-        "body": "You've got to dig it to dig it, you dig?"
-      },
-      {
-        "__component": "shared.rich-text",
-        "body": "## Dedit imago conspicuus cum capillis totidem inhibere\n\nLorem markdownum **rerum**, est limine: columbas: ab infelix hostem arbore nudis\ncrudelis. Videtur reliquit ambo ferrum dote sub amne fatis **illuc**, in magis,\nnec."
-      },
-      {
-        "__component": "shared.media",
-        "file": "coffee-art.jpg"
-      }
-    ]
-  },
   "categories": [
     {
-      "name": "news",
-      "slug": "news"
+      "name": "Apartments",
+      "slug": "apartments",
+      "description": "Apartment rentals"
     },
     {
-      "name": "tech",
-      "slug": "tech"
-    },
-    {
-      "name": "food",
-      "slug": "food"
-    },
-    {
-      "name": "nature",
-      "slug": "nature"
-    },
-    {
-      "name": "story",
-      "slug": "story"
+      "name": "Houses", 
+      "slug": "houses",
+      "description": "House rentals"
     }
   ],
+  "authors": [
+    {
+      "name": "Property Manager",
+      "email": "manager@example.com",
+      "avatar": "default-avatar.png"
+    }
+  ],
+  "articles": [
+    {
+      "title": "Welcome to Our Property Management System",
+      "description": "Learn about our rental properties",
+      "slug": "welcome",
+      "blocks": [
+        {
+          "__component": "shared.rich-text",
+          "body": "Welcome to our property management system powered by AppFolio integration."
+        }
+      ]
+    }
+  ],
+  "global": {
+    "siteName": "Property Management",
+    "siteDescription": "Property rental management system",
+    "defaultSeo": {
+      "metaTitle": "Property Management",
+      "metaDescription": "Find your perfect rental property"
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "blocks": [
+      {
+        "__component": "shared.rich-text",
+        "body": "We are a property management company specializing in rental properties."
+      }
+    ]
+  }
+}
   "authors": [
     {
       "name": "David Doe",
