@@ -1,6 +1,6 @@
 "use strict";
 
-const axios = require("axios");
+const axios = require("axios").default;
 
 module.exports = ({ strapi }) => ({
   async syncUnits() {
